@@ -1,0 +1,53 @@
+# Setup Guide
+
+## 1 Install n8n
+
+You can use:
+
+- n8n Cloud
+- Self-hosted n8n
+
+## 2 Import Workflow
+
+1. Download workflow JSON
+2. Open n8n
+3. Click Import Workflow
+4. Upload:
+
+```
+scholarship-ai-agent.json
+```
+
+## 3 Configure Credentials
+
+You need:
+
+- Gemini API key
+- Google Sheets credentials
+
+## 4 Configure Google Sheets
+
+Create columns:
+
+```
+title
+country
+link
+```
+
+## 5 Configure AI Extraction
+
+The Gemini node extracts:
+
+- scholarship_title
+- scholarship_link
+- country
+- degree_level
+
+## 6 Run Workflow
+
+Execute the workflow to automatically extract scholarships and store them in Google Sheets.
+
+## 7 Automation
+
+You can add a Cron node to run the workflow daily.

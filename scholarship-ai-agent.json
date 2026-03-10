@@ -1,0 +1,310 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        -32
+      ],
+      "id": "9af5257d-ff84-480a-9009-ac4b079bc7e6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6832128e-fbe2-4b88-89b7-58355527ebd9",
+              "name": "website",
+              "value": "[ \"https://opportunitiescorners.com/category/bachelor-master-phd-scholarships/\" ]",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        -32
+      ],
+      "id": "77cc9647-1269-4048-b65b-ca7284264e6d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "=https://opportunitiescorners.com/category/bachelor-master-phd-scholarships/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -192,
+        -32
+      ],
+      "id": "d8de1dc6-f27b-448a-84cc-ead2d2130552",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "post title",
+              "cssSelector": ".entry-title",
+              "returnArray": true
+            },
+            {
+              "key": "Details",
+              "cssSelector": ".td-ss-main-content ul"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -32
+      ],
+      "id": "36d49cdd-1fc5-4a8a-b40e-4bc0b3fd4702",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a structured data extractor.\n\nExtract the following fields from the input:\n\n1. scholarship_title\n2. scholarship_link\n3. country (if available)\n4. degree_level\n\nReturn ONLY valid JSON.\nDo not add any explanation.\n\nInput:\n{{ $json[\"post title\"] }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -32
+      ],
+      "id": "846a08ca-bb72-40b6-b45d-66a523b68fe1",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "FEE5NAwjK3dxQjFq",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// get Gemini text output\nconst raw = items[0].json.content.parts[0].text;\n\n// parse JSON string\nconst scholarships = JSON.parse(raw);\n\n// convert to rows for Google Sheets\nreturn scholarships.map(s => ({\n  json: {\n    title: s.scholarship_title || \"\",\n    country: s.country || \"\",\n    link: s.scholarship_link || \"\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -32
+      ],
+      "id": "d727b3e3-a3ec-4f1d-a62a-302bbbfc76ed",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10QXzd9efvUQi66hcWXaAPApLTC3TJ37x1_BV-SNhRcc",
+          "mode": "list",
+          "cachedResultName": "Scholarship",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10QXzd9efvUQi66hcWXaAPApLTC3TJ37x1_BV-SNhRcc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10QXzd9efvUQi66hcWXaAPApLTC3TJ37x1_BV-SNhRcc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.title }}",
+            "Country": "={{ $json.country }}",
+            "Link": "={{ $json.link }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Deadline",
+              "displayName": "Deadline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "5049b146-92fa-4abc-b7fd-d6e3e64773e9",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RU4DhmQRPazr6229",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "54c1f82d-d9e5-41d0-8568-ab354c34117f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "498b73d6ef7d2a1b87e706b189f17f2951f62896c03fd64ce5a23ff13df7eb3d"
+  },
+  "id": "C8832DEk7dNOX1Ea",
+  "tags": []
+}
